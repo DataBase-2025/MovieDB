@@ -3,13 +3,13 @@ import math
 from db_conn import open_db, close_db
 
 def clear_all_data(cur, conn):
-    print("\U0001f9f9 기존 데이터 삭제 중...")
+    print("기존 데이터 삭제 중...")
     for table in ["movie_genre", "movie_nation", "movie_director", "movie", "director", "genre", "nation"]:
         cur.execute(f"DELETE FROM {table}")
     for table in ["movie", "director", "genre", "nation"]:
         cur.execute(f"ALTER TABLE {table} AUTO_INCREMENT = 1")
     conn.commit()
-    print("\u2705 데이터 초기화 완료")
+    print("데이터 초기화 완료")
 
 def get_or_insert_cached(cur, table, name, cache):
     if not name or str(name).strip() == "" or (isinstance(name, float) and math.isnan(name)):
@@ -98,7 +98,7 @@ def insert_movies_from_excel(file_path):
 
     conn.commit()
     close_db(conn, cur)
-    print("\U0001f389 영화 데이터 삽입 완료!")
+    print("영화 데이터 삽입 완료!")
 
 if __name__ == '__main__':
     insert_movies_from_excel("KOBIS_movie_info.xlsx")
