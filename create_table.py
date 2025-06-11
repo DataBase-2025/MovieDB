@@ -76,7 +76,7 @@ def create_tables():
 
     conn.commit()
     close_db(conn, cur)
-    print("\u2705 테이블 및 인덱스 생성 완료!")
+    print("테이블 및 인덱스 생성 완료!")
 
 if __name__ == '__main__':
     create_tables()
