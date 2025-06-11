@@ -2,7 +2,7 @@
 import pymysql
 from pymysql.constants.CLIENT import MULTI_STATEMENTS
 
-def open_db(dbname='movie'):
+def open_db(dbname='movie_info'):
     conn = pymysql.connect(
         host='localhost',
         user='root',
