@@ -3,13 +3,12 @@ from flask_cors import CORS
 from db_conn import open_db, close_db
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5174"])
+CORS(app, origins=["http://localhost:5173"])
 
 @app.route("/api/movies", methods=["GET"])
 def search_movies():
     conn, cur = open_db()
 
-    # 공통 필터
     base_filter = """
         FROM movie m
         LEFT JOIN movie_director md ON m.movie_id = md.movie_id
@@ -24,6 +23,7 @@ def search_movies():
     filters = ""
     params = []
 
+    # 제목, 감독
     title = request.args.get("title")
     if title:
         filters += " AND MATCH(m.title) AGAINST (%s IN BOOLEAN MODE)"
@@ -34,17 +34,54 @@ def search_movies():
         filters += " AND MATCH(d.name) AGAINST (%s IN BOOLEAN MODE)"
         params.append(director)
 
+    # 연도
     year = request.args.get("year")
     if year and year.isdigit():
         filters += " AND m.open_year = %s"
         params.append(year)
 
-    # 페이지 번호 (기본값: 1)
+    open_start_year = request.args.get("open_start_year")
+    if open_start_year and open_start_year.isdigit():
+        filters += " AND m.open_year >= %s"
+        params.append(open_start_year)
+
+    open_end_year = request.args.get("open_end_year")
+    if open_end_year and open_end_year.isdigit():
+        filters += " AND m.open_year <= %s"
+        params.append(open_end_year)
+
+    # 장르 필터 (배열)
+    genre_list = request.args.getlist("genres")
+    if genre_list:
+        filters += " AND g.name IN (%s)" % ",".join(["%s"] * len(genre_list))
+        params.extend(genre_list)
+
+    # 국적 필터 (단수 or 복수 지원)
+    nation_str = request.args.get("nations") or request.args.get("nation")
+    if nation_str:
+        nation_list = [n.strip() for n in nation_str.split(",") if n.strip()]
+        filters += """
+            AND EXISTS (
+                SELECT 1 FROM movie_nation mn2
+                JOIN nation n2 ON mn2.nation_id = n2.nation_id
+                WHERE mn2.movie_id = m.movie_id AND n2.name IN (%s)
+            )
+        """ % ",".join(["%s"] * len(nation_list))
+        params.extend(nation_list)
+
+    # 유형 필터
+    type_str = request.args.get("type")
+    if type_str:
+        type_list = [t.strip() for t in type_str.split(",") if t.strip()]
+        filters += " AND m.type IN (%s)" % ",".join(["%s"] * len(type_list))
+        params.extend(type_list)
+
+    # 페이지네이션
     page = int(request.args.get("page", 1))
-    per_page = 10  # 고정값
+    per_page = 10
     offset = (page - 1) * per_page
 
-    # 총 개수 쿼리
+    # 총 개수
     count_query = f"""
         SELECT COUNT(DISTINCT m.movie_id) AS total
         {base_filter} {filters}
@@ -53,7 +90,7 @@ def search_movies():
     total_items = cur.fetchone()["total"]
     total_pages = (total_items + per_page - 1) // per_page
 
-    # 실제 데이터 쿼리
+    # 데이터 조회
     data_query = f"""
         SELECT
             m.movie_id, m.title, m.english_title, m.open_year,
