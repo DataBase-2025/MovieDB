@@ -12,12 +12,6 @@ def search_movies():
     filters = []
     params = []
 
-    # 디버깅: 받은 파라미터 출력
-    print("=== 받은 파라미터 ===")
-    for key, value in request.args.items():
-        print(f"{key}: {value}")
-    print("==================")
-
     # 제목, 감독
     title = request.args.get("title")
     if title:
@@ -74,12 +68,6 @@ def search_movies():
     # WHERE 절 구성
     where_clause = "WHERE " + " AND ".join(filters) if filters else ""
     
-    # 디버깅: 생성된 쿼리 정보 출력
-    print(f"필터 개수: {len(filters)}")
-    print(f"WHERE 절: {where_clause}")
-    print(f"파라미터: {params}")
-    print("==================")
-
     # 페이지네이션
     page = int(request.args.get("page", 1))
     per_page = 10
@@ -87,14 +75,12 @@ def search_movies():
 
     # 총 개수 조회 - 수정된 부분
     if filters:
-        # 필터가 있는 경우, movie 테이블에서만 COUNT (EXISTS 조건들이 이미 필터링 처리)
         count_query = f"""
             SELECT COUNT(*) AS total
             FROM movie m
             {where_clause}
         """
     else:
-        # 필터가 없는 경우 전체 영화 수
         count_query = "SELECT COUNT(*) AS total FROM movie"
     
     cur.execute(count_query, params)
