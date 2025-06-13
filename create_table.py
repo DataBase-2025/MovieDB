@@ -69,11 +69,19 @@ def create_tables():
         )
     """)
 
-    # 인덱스 추가
-    cur.execute("CREATE FULLTEXT INDEX ft_movie_title ON movie(title)")
+    cur.execute("CREATE INDEX idx_movie_title ON movie(title)")
     cur.execute("CREATE INDEX idx_movie_open_year ON movie(open_year)")
+    cur.execute("CREATE INDEX idx_movie_type ON movie(type)")
+    cur.execute("CREATE INDEX idx_director_name ON director(name)")
+    cur.execute("CREATE INDEX idx_genre_name ON genre(name)")
+    cur.execute("CREATE INDEX idx_nation_name ON nation(name)")
+        
+    cur.execute("CREATE INDEX idx_movie_director_movie ON movie_director(movie_id, director_id)")
+    cur.execute("CREATE INDEX idx_movie_genre_movie ON movie_genre(movie_id, genre_id)")
+    cur.execute("CREATE INDEX idx_movie_nation_movie ON movie_nation(movie_id, nation_id)")
+        
+    cur.execute("CREATE FULLTEXT INDEX ft_movie_title ON movie(title)")
     cur.execute("CREATE FULLTEXT INDEX ft_director_name ON director(name)")
-
     conn.commit()
     close_db(conn, cur)
     print("테이블 및 인덱스 생성 완료!")
